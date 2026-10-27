@@ -143,7 +143,7 @@ class Instance:
                 self.save_config()
             if then_start and self.files.read_ini()[0].get("OwnerId"):
                 self.task = None
-                self.start()
+                self._launch()  # just updated: no second SteamCMD pass
         self._background("installing", work)
 
     def update(self, start_after=None):
@@ -183,6 +183,8 @@ class Instance:
             cmd = platforms.server_command(self.server_dir, self.port)
             if not cmd:
                 raise RuntimeError("server_not_installed")
+            if not platforms.WINDOWS and os.geteuid() == 0:
+                raise RuntimeError("root")  # the game server itself refuses to run as root
             firewall.allow_game_port(self.port, self.id)
             (self.root / "logs").mkdir(exist_ok=True)
             out = open(self.root / "logs/stdout.log", "ab")
