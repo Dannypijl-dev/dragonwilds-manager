@@ -1,20 +1,23 @@
 {% extends "base.html" %}
-{% block title %}{{ cfg.name }} · {{ t('app') }}{% endblock %}
+{% block title %}{{ cfg.name }} – {{ t('app') }}{% endblock %}
 {% macro ctl(what, label, cls='') %}{{ post(url_for('control', iid=inst.id, what=what), label, cls) }}{% endmacro %}
 {% macro hidden(name, value) %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endmacro %}
 {% block content %}
-<div class="pagehead">
-  <div><h1>{{ cfg.name }}</h1><div class="sub">{{ v.get('ServerName', '') }} · UDP {{ cfg.port }} · {{ t('world') }}: <b>{{ v.get('DefaultWorldName', '–') }}</b></div></div>
-  <div class="status"><span id="dot" class="dot"></span><span id="state">…</span></div>
-</div>
-{% if not v.get('OwnerId') and inst.installed %}<div class="flash error">{{ t('no_owner') }}</div>{% endif %}
+<header class="hearth">
+  <div>
+    <h1>{{ cfg.name }}</h1>
+    <div class="meta">{% if v.get('ServerName') and v.get('ServerName') != cfg.name %}<span>{{ v.get('ServerName') }}</span>{% endif %}<span>UDP {{ cfg.port }}</span><span>{{ t('world') }} <b>{{ v.get('DefaultWorldName', '–') }}</b></span></div>
+  </div>
+  <div class="state"><span id="dot" class="ember"></span><span id="state">…</span></div>
+</header>
+{% if not v.get('OwnerId') and inst.installed %}<div class="flash error" style="margin-top:16px">{{ t('no_owner') }}</div>{% endif %}
 <div class="tabs">{% for x in tabs %}<a class="{{ 'cur' if x == tab }}" href="{{ url_for('server', iid=inst.id, tab=x) }}">{{ t('tab_' ~ x) }}</a>{% endfor %}</div>
 
 {% if tab == 'overview' %}
 <div class="grid">
-  <section class="card c4">
+  <section class="panel c4">
     <h2>{{ t('status') }}</h2>
-    <div id="message" class="hint" style="color:var(--ember)"></div>
+    <div id="message" class="hint" style="color:var(--fire)"></div>
     <div id="progressbox" style="display:none"><div class="sub">{{ t('progress') }} <span id="pct"></span></div><div class="progress"><div id="bar" style="width:0"></div></div></div>
     <dl>
       <dt>{{ t('since') }}</dt><dd id="since">–</dd>
@@ -30,13 +33,13 @@
       {% else %}<span class="sub">{{ t('not_installed_text') }}</span>{{ ctl('install', t('install')) }}{% endif %}
     </div>
   </section>
-  <section class="card c8">
+  <section class="panel c8">
     <h2>{{ t('online_now') }}</h2>
     <div style="display:flex;align-items:baseline;gap:10px"><span class="count" id="pcount">0</span><span class="sub">{{ t('of_max') }}</span></div>
-    <table style="margin-top:10px"><thead><tr><th>{{ t('name') }}</th><th>{{ t('platform') }}</th><th>{{ t('id') }}</th></tr></thead><tbody id="players"></tbody></table>
+    <table style="margin-top:12px"><thead><tr><th>{{ t('name') }}</th><th>{{ t('platform') }}</th><th>{{ t('id') }}</th></tr></thead><tbody id="players"></tbody></table>
     <ul class="events" id="events"></ul>
   </section>
-  <section class="card c12">
+  <section class="panel">
     <h2>{{ t('console') }}</h2>
     <pre class="console" id="console"></pre>
     <div class="hint">{{ t('console_hint') }}</div>
@@ -45,45 +48,45 @@
 
 {% elif tab == 'players' %}
 <div class="grid">
-  <section class="card c12">
+  <section class="panel">
     <h2>{{ t('online_now') }}</h2>
     <table><thead><tr><th>{{ t('name') }}</th><th>{{ t('platform') }}</th><th>{{ t('id') }}</th>{% if s.can_block %}<th></th>{% endif %}</tr></thead><tbody id="players"></tbody></table>
     {% if s.can_block %}
-    <div id="blockedbox" style="display:none;margin-top:14px"><div class="sub">{{ t('blocked') }}</div><table><tbody id="blocked"></tbody></table></div>
+    <div id="blockedbox" style="display:none;margin-top:16px"><div class="sub">{{ t('blocked') }}</div><table><tbody id="blocked"></tbody></table></div>
     <div class="hint">{{ t('kick_hint') }}</div>
     {% else %}<div class="hint">{{ t('kick_unavailable') }}</div>{% endif %}
     <ul class="events" id="events"></ul>
   </section>
-  <section class="card c12">
+  <section class="panel">
     <h2>{{ t('roster') }}</h2>
     <div class="wlbar">
-      <span>{{ t('whitelist') }}: <b style="color:var({{ '--ok' if roster.whitelist else '--muted' }})">{{ t('on') if roster.whitelist else t('off') }}</b></span>
+      <span>{{ t('whitelist') }}: <b style="color:var({{ '--verdigris' if roster.whitelist else '--lichen' }})">{{ t('on') if roster.whitelist else t('off') }}</b></span>
       <form method="post" action="{{ url_for('whitelist', iid=inst.id) }}">{{ hidden('csrf', session.csrf) }}{{ hidden('enabled', '0' if roster.whitelist else '1') }}<button class="{{ 'ghost' if roster.whitelist else '' }}">{{ t('wl_turn_off') if roster.whitelist else t('wl_turn_on') }}</button></form>
-      <form method="post" action="{{ url_for('whitelist_player', iid=inst.id) }}" class="wladd">{{ hidden('csrf', session.csrf) }}{{ hidden('allowed', '1') }}<input name="id" placeholder="{{ t('wl_add_placeholder') }}" autocomplete="off"><button class="ghost">{{ t('wl_allow') }}</button></form>
+      <form method="post" action="{{ url_for('whitelist_player', iid=inst.id) }}" class="wladd">{{ hidden('csrf', session.csrf) }}{{ hidden('allowed', '1') }}<input name="id" placeholder="{{ t('wl_add_placeholder') }}" autocomplete="off" aria-label="{{ t('wl_add_placeholder') }}"><button class="ghost">{{ t('wl_allow') }}</button></form>
     </div>
     <div class="hint">{{ t('wl_hint', hours=roster.block_hours) }}{% if not roster.can_block %} {{ t('kick_unavailable') }}{% endif %}</div>
     {% if roster.rows %}
-    <div class="scroll"><table style="margin-top:10px"><thead><tr><th>{{ t('name') }}</th><th>{{ t('platform') }}</th><th>{{ t('playtime') }}</th><th>{{ t('sessions') }}</th><th>{{ t('last_seen') }}</th><th>{{ t('whitelist') }}</th><th></th></tr></thead><tbody>
+    <div class="scroll"><table style="margin-top:12px"><thead><tr><th>{{ t('name') }}</th><th>{{ t('platform') }}</th><th>{{ t('playtime') }}</th><th>{{ t('sessions') }}</th><th>{{ t('last_seen') }}</th><th>{{ t('whitelist') }}</th><th></th></tr></thead><tbody>
       {% for r in roster.rows %}<tr>
-        <td>{{ r.name }}{% if r.online %} <span class="badge ok">{{ t('online_badge') }}</span>{% endif %}{% if r.is_owner %} <span class="badge">{{ t('owner_badge') }}</span>{% endif %}{% if r.banned %} <span class="badge bad">{{ t('banned_badge') }}</span>{% endif %}<div class="sub" style="font-size:11px">{{ r.id }}</div></td>
+        <td>{{ r.name }}{% if r.online %} <span class="badge ok">{{ t('online_badge') }}</span>{% endif %}{% if r.is_owner %} <span class="badge">{{ t('owner_badge') }}</span>{% endif %}{% if r.banned %} <span class="badge bad">{{ t('banned_badge') }}</span>{% endif %}<div class="sub" style="font-size:12px">{{ r.id }}</div></td>
         <td>{% if r.platform %}<span class="badge">{{ r.platform }}</span>{% else %}–{% endif %}</td>
         <td><b>{{ r.time }}</b></td><td>{{ r.sessions or '–' }}</td><td>{{ r.last }}</td>
-        <td>{% if r.is_owner %}<span class="sub">{{ t('wl_always') }}</span>{% else %}<form method="post" action="{{ url_for('whitelist_player', iid=inst.id) }}">{{ hidden('csrf', session.csrf) }}{{ hidden('id', r.id) }}{{ hidden('allowed', '0' if r.allowed else '1') }}<span style="color:var({{ '--ok' if r.allowed else '--muted' }})">{{ '✓' if r.allowed else '✕' }}</span><button class="ghost small">{{ t('wl_remove') if r.allowed else t('wl_allow') }}</button></form>{% endif %}</td>
+        <td>{% if r.is_owner %}<span class="sub">{{ t('wl_always') }}</span>{% else %}<form method="post" action="{{ url_for('whitelist_player', iid=inst.id) }}">{{ hidden('csrf', session.csrf) }}{{ hidden('id', r.id) }}{{ hidden('allowed', '0' if r.allowed else '1') }}<span style="color:var({{ '--verdigris' if r.allowed else '--lichen' }})">{{ '✓' if r.allowed else '✕' }}</span><button class="ghost small">{{ t('wl_remove') if r.allowed else t('wl_allow') }}</button></form>{% endif %}</td>
         <td>{% if r.known and not r.is_owner %}<form method="post" action="{{ url_for('ban', iid=inst.id) }}">{{ hidden('csrf', session.csrf) }}{{ hidden('id', r.id) }}{{ hidden('banned', '0' if r.banned else '1') }}<button class="small {{ 'ghost' if r.banned else 'danger' }}">{{ t('unban') if r.banned else t('ban') }}</button></form>{% endif %}</td>
       </tr>{% endfor %}
     </tbody></table></div>
     <div class="hint">{{ t('ban_hint') }}</div>
     {% else %}<div class="empty">{{ t('no_history') }}</div>{% endif %}
-    <div class="row" style="margin-top:12px">
+    <div class="row" style="margin-top:14px">
       <div>{% if roster.sessions %}<div class="sub">{{ t('recent_sessions') }}</div><table><tbody>{% for x in roster.sessions %}<tr><td>{{ x.name }}</td><td class="sub">{{ x.start }}</td><td>{{ x.time }}{% if x.open %} <span class="badge ok">{{ t('online_badge') }}</span>{% endif %}</td></tr>{% endfor %}</tbody></table>{% endif %}</div>
-      <div>{% if roster.refused %}<div class="sub">{{ t('refused') }}</div><table><tbody>{% for x in roster.refused %}<tr><td>{{ x.name }}</td><td class="sub">{{ x.at }}</td><td class="sub">{{ x.ip or '?' }} · {{ t('refused_blocked') if x.blocked else t('refused_not_blocked') }}</td></tr>{% endfor %}</tbody></table>{% endif %}</div>
+      <div>{% if roster.refused %}<div class="sub">{{ t('refused') }}</div><table><tbody>{% for x in roster.refused %}<tr><td>{{ x.name }}</td><td class="sub">{{ x.at }}</td><td class="sub">{{ x.ip or '?' }}, {{ t('refused_blocked') if x.blocked else t('refused_not_blocked') }}</td></tr>{% endfor %}</tbody></table>{% endif %}</div>
     </div>
   </section>
 </div>
 
 {% elif tab == 'settings' %}
 <div class="grid">
-  <section class="card c7">
+  <section class="panel c7">
     <h2>{{ t('server_settings') }}</h2>
     <form method="post" action="{{ url_for('settings', iid=inst.id) }}">{{ hidden('csrf', session.csrf) }}
       <div class="owner"><label for="OwnerId">{{ t('owner_label') }}</label>
@@ -115,7 +118,7 @@
       <div class="btns"><button type="submit">{{ t('save') }}</button><span class="hint">{{ t('save_hint') }}</span></div>
     </form>
   </section>
-  <section class="card c5">
+  <section class="panel c5">
     <h2>{{ t('world_settings') }}</h2>
     {% if world %}
     <form method="post" action="{{ url_for('world_settings_route', iid=inst.id) }}">{{ hidden('csrf', session.csrf) }}
@@ -132,11 +135,11 @@
       <div class="hint">{{ t('ws_save_hint') }}</div>
     </form>
     {% else %}<div class="empty">{{ t('err_ws_unknown') }}</div>{% endif %}
-    <h3 style="margin-top:28px;color:var(--bad)">{{ t('danger_zone') }}</h3>
+    <h3 style="color:var(--blood-soft)">{{ t('danger_zone') }}</h3>
     <div class="danger-box">
       <div class="sub">{{ t('delete_text') }}</div>
-      <form method="post" action="{{ url_for('delete_server', iid=inst.id) }}" style="margin-top:8px">{{ hidden('csrf', session.csrf) }}
-        <input name="confirm" placeholder="{{ cfg.name }}" autocomplete="off">
+      <form method="post" action="{{ url_for('delete_server', iid=inst.id) }}" style="margin-top:10px">{{ hidden('csrf', session.csrf) }}
+        <input name="confirm" placeholder="{{ cfg.name }}" autocomplete="off" aria-label="{{ t('name') }}">
         <div class="btns"><button class="danger">{{ t('delete_server') }}</button></div></form>
     </div>
   </section>
@@ -144,9 +147,9 @@
 
 {% elif tab == 'worlds' %}
 <div class="grid">
-  <section class="card c7">
+  <section class="panel c7">
     <h2>{{ t('tab_worlds') }}</h2>
-    <div class="sub" style="margin-bottom:10px">{{ t('worlds_text') }}</div>
+    <div class="sub">{{ t('worlds_text') }}</div>
     {% if worlds %}
     <div class="scroll"><table><thead><tr><th>{{ t('world') }}</th><th>{{ t('difficulty') }}</th><th>{{ t('pvp') }}</th><th>{{ t('size') }}</th><th>{{ t('date') }}</th><th></th></tr></thead><tbody>
       {% for w in worlds %}<tr>
@@ -162,10 +165,10 @@
     </tbody></table></div>
     {% else %}<div class="empty">{{ t('no_worlds') }}</div>{% endif %}
   </section>
-  <section class="card c5">
+  <section class="panel c5">
     <h2>{{ t('import_world') }}</h2>
     <form method="post" action="{{ url_for('world_upload', iid=inst.id) }}" enctype="multipart/form-data">{{ hidden('csrf', session.csrf) }}
-      <input type="file" name="file" accept=".sav,.zip" required>
+      <input type="file" name="file" accept=".sav,.zip" required aria-label="{{ t('import_world') }}">
       <div class="hint">{{ t('import_hint') }}</div>
       <label class="check"><input type="checkbox" name="activate" value="1" checked> {{ t('import_activate') }}</label>
       <label class="check"><input type="checkbox" name="overwrite" value="1"> {{ t('import_overwrite') }}</label>
@@ -176,11 +179,11 @@
 
 {% elif tab == 'mods' %}
 <div class="grid">
-  <section class="card c7">
+  <section class="panel c7">
     <h2>{{ t('tab_mods') }}</h2>
-    <div class="sub" style="margin-bottom:10px">{{ t('mods_text') }}</div>
+    <div class="sub">{{ t('mods_text') }}</div>
     {% if mods %}
-    <table><thead><tr><th>{{ t('name') }}</th><th>{{ t('mod_files') }}</th><th>{{ t('size') }}</th><th></th></tr></thead><tbody>
+    <div class="scroll"><table><thead><tr><th>{{ t('name') }}</th><th>{{ t('mod_files') }}</th><th>{{ t('size') }}</th><th></th></tr></thead><tbody>
       {% for m in mods %}<tr>
         <td><b>{{ m.name }}</b> <span class="badge {{ 'ok' if m.enabled else '' }}">{{ t('enabled') if m.enabled else t('disabled') }}</span>{% if not m.complete %}<div class="warn">{{ t('incomplete') }}</div>{% endif %}</td>
         <td class="sub">{{ m.files|join(' ') }}</td><td>{{ '%.1f MB' % (m.size / 1048576) }}</td>
@@ -188,14 +191,14 @@
           <form method="post" action="{{ url_for('mod_change', iid=inst.id, what='disable' if m.enabled else 'enable') }}">{{ hidden('csrf', session.csrf) }}{{ hidden('name', m.name) }}<button class="small {{ 'ghost' if m.enabled else '' }}">{{ t('disable') if m.enabled else t('enable') }}</button></form>
           <form method="post" action="{{ url_for('mod_change', iid=inst.id, what='delete') }}" onsubmit="return confirm('{{ m.name }}?')">{{ hidden('csrf', session.csrf) }}{{ hidden('name', m.name) }}<button class="danger small">{{ t('delete') }}</button></form></td>
       </tr>{% endfor %}
-    </tbody></table>
+    </tbody></table></div>
     <div class="hint">{{ t('mods_restart') }} {{ t('mods_folder') }}: <code>{{ inst.files.mods_dir }}</code></div>
     {% else %}<div class="empty">{{ t('no_mods') }}</div>{% endif %}
   </section>
-  <section class="card c5">
+  <section class="panel c5">
     <h2>{{ t('upload_mod') }}</h2>
     <form method="post" action="{{ url_for('mod_upload', iid=inst.id) }}" enctype="multipart/form-data">{{ hidden('csrf', session.csrf) }}
-      <input type="file" name="file" accept=".zip,.pak,.utoc,.ucas,.sig" required>
+      <input type="file" name="file" accept=".zip,.pak,.utoc,.ucas,.sig" required aria-label="{{ t('upload_mod') }}">
       <div class="hint">{{ t('upload_mod_hint') }}</div>
       <div class="btns"><button>{{ t('upload') }}</button></div>
     </form>
@@ -204,28 +207,28 @@
 
 {% elif tab == 'backups' %}
 <div class="grid">
-  <section class="card c7">
+  <section class="panel c7">
     <h2>{{ t('tab_backups') }}</h2>
-    <div class="sub" style="margin-bottom:10px">{{ t('backups_text') }}</div>
-    <div class="btns">
+    <div class="sub">{{ t('backups_text') }}</div>
+    <div class="btns" style="margin-top:0">
       {{ post(url_for('backup_create', iid=inst.id), t('backup_now')) }}
       <form method="post" action="{{ url_for('backup_create', iid=inst.id) }}">{{ hidden('csrf', session.csrf) }}{{ hidden('hot', '1') }}<button class="ghost">{{ t('backup_hot') }}</button></form>
     </div>
     <div class="hint">{{ t('backup_hot_hint') }} {{ t('backup_keep_hint', keep=cfg.backup_keep) }}</div>
     {% if backups %}
-    <table style="margin-top:12px"><thead><tr><th>{{ t('date') }}</th><th>{{ t('name') }}</th><th>{{ t('size') }}</th><th></th></tr></thead><tbody>
+    <div class="scroll"><table style="margin-top:14px"><thead><tr><th>{{ t('date') }}</th><th>{{ t('name') }}</th><th>{{ t('size') }}</th><th></th></tr></thead><tbody>
       {% for b in backups %}<tr><td>{{ b.date }}</td><td class="sub">{{ b.name }}</td><td>{{ b.size }}</td>
         <td style="white-space:nowrap">
           <form method="post" action="{{ url_for('backup_restore', iid=inst.id) }}" onsubmit="return confirm({{ t('restore_confirm')|tojson }})">{{ hidden('csrf', session.csrf) }}{{ hidden('name', b.name) }}<button class="small">{{ t('restore') }}</button></form>
           <a class="btn ghost small" href="{{ url_for('backup_download', iid=inst.id, name=b.name) }}">{{ t('download') }}</a>
           <form method="post" action="{{ url_for('backup_delete', iid=inst.id) }}" onsubmit="return confirm('{{ b.name }}?')">{{ hidden('csrf', session.csrf) }}{{ hidden('name', b.name) }}<button class="danger small">{{ t('delete') }}</button></form></td></tr>{% endfor %}
-    </tbody></table>
+    </tbody></table></div>
     {% else %}<div class="empty">{{ t('no_backups') }}</div>{% endif %}
   </section>
-  <section class="card c5">
+  <section class="panel c5">
     <h2>{{ t('upload_backup') }}</h2>
     <form method="post" action="{{ url_for('backup_upload', iid=inst.id) }}" enctype="multipart/form-data" onsubmit="return confirm({{ t('restore_confirm')|tojson }})">{{ hidden('csrf', session.csrf) }}
-      <input type="file" name="file" accept=".zip,.tar.gz,.tgz" required>
+      <input type="file" name="file" accept=".zip,.tar.gz,.tgz" required aria-label="{{ t('upload_backup') }}">
       <div class="hint">{{ t('upload_backup_hint') }}</div>
       <div class="btns"><button>{{ t('restore') }}</button></div>
     </form>
@@ -234,11 +237,11 @@
 
 {% elif tab == 'schedules' %}
 <div class="grid">
-  <section class="card c7">
+  <section class="panel c7">
     <h2>{{ t('tab_schedules') }}</h2>
-    <div class="sub" style="margin-bottom:10px">{{ t('schedules_text') }}</div>
+    <div class="sub">{{ t('schedules_text') }}</div>
     {% if schedules %}
-    <table><thead><tr><th>{{ t('schedule') }}</th><th>{{ t('action') }}</th><th>{{ t('next_run') }}</th><th>{{ t('last_run') }}</th><th></th></tr></thead><tbody>
+    <div class="scroll"><table><thead><tr><th>{{ t('schedule') }}</th><th>{{ t('action') }}</th><th>{{ t('next_run') }}</th><th>{{ t('last_run') }}</th><th></th></tr></thead><tbody>
       {% for x in schedules %}<tr>
         <td><code>{{ x.cron }}</code>{% if not x.enabled %} <span class="badge">{{ t('off') }}</span>{% endif %}</td>
         <td>{{ t('action_' ~ x.action) }}</td><td>{{ x.next }}</td>
@@ -248,17 +251,17 @@
           <form method="post" action="{{ url_for('schedule_change', iid=inst.id, what='toggle') }}">{{ hidden('csrf', session.csrf) }}{{ hidden('id', x.id) }}<button class="ghost small">{{ t('pause') if x.enabled else t('resume') }}</button></form>
           <form method="post" action="{{ url_for('schedule_change', iid=inst.id, what='delete') }}">{{ hidden('csrf', session.csrf) }}{{ hidden('id', x.id) }}<button class="danger small">{{ t('delete') }}</button></form></td>
       </tr>{% endfor %}
-    </tbody></table>
+    </tbody></table></div>
     {% else %}<div class="empty">{{ t('no_schedules') }}</div>{% endif %}
   </section>
-  <section class="card c5">
+  <section class="panel c5">
     <h2>{{ t('add') }}</h2>
     <form method="post" action="{{ url_for('schedule_add', iid=inst.id) }}">{{ hidden('csrf', session.csrf) }}
-      <label>{{ t('action') }}</label>
-      <select name="action">{% for a in actions %}<option value="{{ a }}">{{ t('action_' ~ a) }}</option>{% endfor %}</select>
-      <label>{{ t('preset') }}</label>
-      <select name="preset">{% for expr, key in presets %}<option value="{{ expr }}">{{ t('preset_' ~ key) }} · <code>{{ expr }}</code></option>{% endfor %}</select>
-      <label>{{ t('or_cron') }}</label><input name="cron" placeholder="30 4 * * *" autocomplete="off">
+      <label for="sched_action">{{ t('action') }}</label>
+      <select id="sched_action" name="action">{% for a in actions %}<option value="{{ a }}">{{ t('action_' ~ a) }}</option>{% endfor %}</select>
+      <label for="sched_preset">{{ t('preset') }}</label>
+      <select id="sched_preset" name="preset">{% for expr, key in presets %}<option value="{{ expr }}">{{ t('preset_' ~ key) }} ({{ expr }})</option>{% endfor %}</select>
+      <label for="sched_cron">{{ t('or_cron') }}</label><input id="sched_cron" name="cron" placeholder="30 4 * * *" autocomplete="off">
       <div class="btns"><button>{{ t('add') }}</button></div>
     </form>
   </section>
@@ -272,8 +275,7 @@
   const KICK_URL = {{ url_for('kick', iid=inst.id) | tojson }}, UNBLOCK_URL = {{ url_for('unblock', iid=inst.id) | tojson }};
   const KICK_OPTIONS = {{ (kick_minutes if kick_minutes is defined else [15, 60, 1440]) | tojson }};
   function render(s) {
-    const mid = ['starting','installing','updating','stopping'].includes(s.state);
-    $('dot').className = 'dot' + (s.state === 'running' ? ' on' : (mid ? ' mid' : ''));
+    $('dot').className = emberClass(s.state);
     $('state').textContent = T['state_' + s.state] + (s.progress != null ? ` ${s.progress}%` : '');
     if ($('since')) {
       $('since').textContent = s.since || '–'; $('memory').textContent = s.memory; $('build').textContent = s.build;

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dragonwilds-manager"
-version = "0.1.1"
+version = "0.1.2"
 description = "Web panel to create and run RuneScape: Dragonwilds dedicated servers on Windows, Linux or Docker"
 readme = "README.md"
 license = "MIT"

@@ -3,22 +3,28 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
 <title>{% block title %}{{ t('app') }}{% endblock %}</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M22 4h20l12 14-2 42H12L10 18z' fill='%232a3230' stroke='%23e8e0cf' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M32 16v34M32 22l12 10M32 32L20 42' fill='none' stroke='%23e4622a' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grenze:wght@500;600;700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap">
 <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
 </head>
 <body>
 {% macro flashes() %}{% for cat, msg in get_flashed_messages(with_categories=true) %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}{% endmacro %}
 {% macro post(action, label, cls='', confirm=None) %}<form method="post" action="{{ action }}"{% if confirm %} onsubmit="return confirm({{ confirm|tojson }})"{% endif %}><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="{{ cls }}">{{ label }}</button></form>{% endmacro %}
-{% set dragon %}<svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3c66f"/><stop offset="1" stop-color="#e8742a"/></linearGradient></defs><path fill="url(#g)" d="M32 4c3 6 9 9 16 9-3 3-4 6-3 10 4-1 8 0 11 3-5 1-8 4-9 9 3 1 5 4 5 8-4-2-8-2-11 0l-3 13-6-9-6 9-3-13c-3-2-7-2-11 0 0-4 2-7 5-8-1-5-4-8-9-9 3-3 7-4 11-3 1-4 0-7-3-10 7 0 13-3 16-9z"/><circle cx="26" cy="26" r="2.4" fill="#1a0f07"/><circle cx="38" cy="26" r="2.4" fill="#1a0f07"/></svg>{% endset %}
+{% macro ember(state) %}<span class="ember {{ 'on' if state == 'running' else ('busy' if state in ('starting', 'installing', 'updating', 'stopping') else ('bad' if state == 'crashed' else '')) }}"></span>{% endmacro %}
+{% set mark %}<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M22 4h20l12 14-2 42H12L10 18z" fill="#2a3230" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M32 16v34M32 22l12 10M32 32L20 42" fill="none" stroke="#e4622a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>{% endset %}
 {% block body %}
 <div class="shell">
-  <nav class="side">
-    <a class="brand" href="{{ url_for('dashboard') }}">{{ dragon }}<span>{{ t('app') }}</span></a>
-    <div class="navhead">{{ t('servers') }}</div>
-    {% for srv in servers %}<a class="navitem {{ 'cur' if inst is defined and inst.id == srv.id }}" href="{{ url_for('server', iid=srv.id) }}"><span class="dot {{ 'on' if srv.running() and srv.watcher.ready else ('mid' if srv.running() or srv.task) }}"></span>{{ srv.config.name }}</a>{% endfor %}
+  <nav class="rail">
+    <a class="brand" href="{{ url_for('dashboard') }}">{{ mark }}<span>{{ t('app') }}</span></a>
+    <div class="rail-title">{{ t('servers') }}</div>
+    {% for srv in servers %}<a class="navitem {{ 'cur' if inst is defined and inst.id == srv.id }}" href="{{ url_for('server', iid=srv.id) }}">{{ ember(srv.state()) }}{{ srv.config.name }}</a>{% endfor %}
     <a class="navitem add" href="{{ url_for('new_server') }}">+ {{ t('new_server') }}</a>
-    <div class="navfoot">
-      <a class="navitem {{ 'cur' if request.endpoint == 'manager_settings' }}" href="{{ url_for('manager_settings') }}">⚙ {{ t('manager') }}</a>
+    <div class="rail-foot">
+      <a class="navitem {{ 'cur' if request.endpoint == 'manager_settings' }}" href="{{ url_for('manager_settings') }}">{{ t('manager') }}</a>
       <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="ghost small">{{ t('logout') }}</button></form>
     </div>
   </nav>
@@ -32,6 +38,7 @@
   const CSRF = {{ (session.csrf or '') | tojson }};
   const $ = id => document.getElementById(id);
   const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const emberClass = state => 'ember' + (state === 'running' ? ' on' : ['starting','installing','updating','stopping'].includes(state) ? ' busy' : state === 'crashed' ? ' bad' : '');
   function toggle(id) { const el = $(id); el.type = el.type === 'password' ? 'text' : 'password'; }
   function gen(id) {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';

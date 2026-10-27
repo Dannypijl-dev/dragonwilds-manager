@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="pagehead"><div><h1>{{ t('new_server') }}</h1><div class="sub">{{ t('new_text') }}</div></div></div>
-<div class="card" style="max-width:760px">
+<div class="panel" style="max-width:760px">
   <form method="post">
     <input type="hidden" name="csrf" value="{{ session.csrf }}">
     <div class="row">

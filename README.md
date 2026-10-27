@@ -68,6 +68,7 @@ Panel on port 8080, first game server on UDP 7777, data in the `data` volume. Fo
 - The world's name lives *inside* the save file; an imported world keeps that name.
 - Keep the panel on your LAN or behind a reverse proxy with HTTPS. It has one password, CSRF protection and a login rate limit, nothing more.
 - Memory: a server uses about 1.5–2 GB with a few players, more as the world grows. Disk: about 5 GB per server plus backups.
+- The panel loads its two typefaces from Google Fonts; without internet access it falls back to system fonts and works the same.
 
 ## Development
 

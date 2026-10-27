@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block body %}
-<div class="login">
-  <div class="brand" style="justify-content:center;margin-bottom:18px">{{ dragon }}<span style="font-size:22px">{{ t('app') }}</span></div>
-  <div class="card">
+<div class="gate">
+  <div class="brand">{{ mark }}<span>{{ t('app') }}</span></div>
+  <div class="panel">
     {{ flashes() }}
     {% if view == "setup" %}
     <h2>{{ t('setup_title') }}</h2>
@@ -22,6 +22,6 @@
     </form>
     {% endif %}
   </div>
-  <p class="sub" style="text-align:center;margin-top:14px">{{ t('tagline') }}</p>
+  <p class="sub tagline">{{ t('tagline') }}</p>
 </div>
 {% endblock %}

@@ -2,25 +2,25 @@
 {% block content %}
 <div class="pagehead"><div><h1>{{ t('manager') }}</h1><div class="sub">{{ t('manager_text') }}</div></div></div>
 <div class="grid">
-  <section class="card c6">
+  <section class="panel c6">
     <h2>{{ t('language') }}</h2>
     <form method="post"><input type="hidden" name="csrf" value="{{ session.csrf }}"><input type="hidden" name="what" value="lang">
-      <select name="lang">{% for code, name in languages.items() %}<option value="{{ code }}" {{ 'selected' if code == lang }}>{{ name }}</option>{% endfor %}</select>
+      <select name="lang" aria-label="{{ t('language') }}">{% for code, name in languages.items() %}<option value="{{ code }}" {{ 'selected' if code == lang }}>{{ name }}</option>{% endfor %}</select>
       <div class="btns"><button>{{ t('save') }}</button></div></form>
   </section>
-  <section class="card c6">
+  <section class="panel c6">
     <h2>{{ t('change_password') }}</h2>
     <form method="post"><input type="hidden" name="csrf" value="{{ session.csrf }}"><input type="hidden" name="what" value="password">
-      <label>{{ t('current_password') }}</label><input type="password" name="current" autocomplete="current-password">
-      <label>{{ t('new_password') }}</label><input type="password" name="password" autocomplete="new-password" minlength="8">
-      <label>{{ t('password2') }}</label><input type="password" name="password2" autocomplete="new-password">
+      <label for="current">{{ t('current_password') }}</label><input id="current" type="password" name="current" autocomplete="current-password">
+      <label for="password">{{ t('new_password') }}</label><input id="password" type="password" name="password" autocomplete="new-password" minlength="8">
+      <label for="password2">{{ t('password2') }}</label><input id="password2" type="password" name="password2" autocomplete="new-password">
       <div class="btns"><button>{{ t('save') }}</button></div></form>
   </section>
-  <section class="card c12">
+  <section class="panel">
     <h2>{{ t('about') }}</h2>
     <dl><dt>{{ t('data_dir') }}</dt><dd><code>{{ data_dir }}</code></dd>
       <dt>{{ t('firewall_mode') }}</dt><dd>{{ firewall or t('firewall_none') }}</dd></dl>
-    <p class="sub">{{ t('about_text', version=version) }}</p>
+    <p class="sub" style="margin-top:14px">{{ t('about_text', version=version) }}</p>
   </section>
 </div>
 {% endblock %}
