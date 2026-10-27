@@ -4,7 +4,7 @@ from PyInstaller.utils.hooks import collect_submodules
 
 block_cipher = None
 a = Analysis(
-    ["../../src/dwmanager/__main__.py"],
+    ["launcher.py"],
     pathex=["../../src"],
     datas=[("../../src/dwmanager/templates", "dwmanager/templates"), ("../../src/dwmanager/static", "dwmanager/static")],
     hiddenimports=["win32timezone", "win32serviceutil", "win32service", "win32event", "servicemanager",
