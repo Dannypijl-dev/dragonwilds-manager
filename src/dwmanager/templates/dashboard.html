@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="pagehead"><div><h1>{{ t('servers') }}</h1><div class="sub">{{ t('tagline') }}</div></div>
+  <a class="btn" href="{{ url_for('new_server') }}">+ {{ t('new_server') }}</a></div>
+{% if rows %}
+<div class="cards" id="cards">
+  {% for s in rows %}
+  <a class="card scard" href="{{ url_for('server', iid=s.id) }}" data-id="{{ s.id }}">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <span class="name">{{ s.name }}</span>
+      <span class="badge" data-f="state"><span class="dot {{ 'on' if s.state == 'running' else ('mid' if s.state in ('starting','installing','updating','stopping')) }}" style="display:inline-block;vertical-align:middle;margin-right:6px"></span>{{ t('state_' ~ s.state) }}</span>
+    </div>
+    <dl>
+      <dt>{{ t('world') }}</dt><dd>{{ s.world or '–' }}</dd>
+      <dt>{{ t('port') }}</dt><dd>UDP {{ s.port }}</dd>
+      <dt>{{ t('players') }}</dt><dd data-f="players">{{ s.players|length }} {{ t('of_max') }}</dd>
+      <dt>{{ t('join_code') }}</dt><dd class="code" style="font-size:15px" data-f="code">{{ s.join_code or '–' }}</dd>
+    </dl>
+    {% if s.progress is not none %}<div class="progress"><div style="width:{{ s.progress }}%"></div></div>{% endif %}
+  </a>
+  {% endfor %}
+</div>
+{% else %}<div class="card"><div class="empty">{{ t('no_servers') }}</div></div>{% endif %}
+{% endblock %}
+{% block script %}
+<script>
+  const STATES = {{ dict(state_not_installed=t('state_not_installed'), state_installing=t('state_installing'), state_updating=t('state_updating'), state_stopping=t('state_stopping'), state_starting=t('state_starting'), state_running=t('state_running'), state_stopped=t('state_stopped'), state_crashed=t('state_crashed')) | tojson }};
+  const OF = {{ t('of_max') | tojson }};
+  setInterval(() => fetch('{{ url_for("api_servers") }}').then(r => r.ok ? r.json() : null).then(rows => rows && rows.forEach(s => {
+    const card = document.querySelector(`[data-id="${s.id}"]`); if (!card) return;
+    const mid = ['starting','installing','updating','stopping'].includes(s.state);
+    card.querySelector('[data-f=state]').innerHTML = `<span class="dot ${s.state === 'running' ? 'on' : (mid ? 'mid' : '')}" style="display:inline-block;vertical-align:middle;margin-right:6px"></span>${esc(STATES['state_' + s.state])}`;
+    card.querySelector('[data-f=players]').textContent = `${s.players.length} ${OF}`;
+    card.querySelector('[data-f=code]').textContent = s.join_code || '–';
+  })).catch(() => {}), 10000);
+</script>
+{% endblock %}

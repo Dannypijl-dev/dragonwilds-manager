@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ t('app') }}{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+{% macro flashes() %}{% for cat, msg in get_flashed_messages(with_categories=true) %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}{% endmacro %}
+{% macro post(action, label, cls='', confirm=None) %}<form method="post" action="{{ action }}"{% if confirm %} onsubmit="return confirm({{ confirm|tojson }})"{% endif %}><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="{{ cls }}">{{ label }}</button></form>{% endmacro %}
+{% set dragon %}<svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3c66f"/><stop offset="1" stop-color="#e8742a"/></linearGradient></defs><path fill="url(#g)" d="M32 4c3 6 9 9 16 9-3 3-4 6-3 10 4-1 8 0 11 3-5 1-8 4-9 9 3 1 5 4 5 8-4-2-8-2-11 0l-3 13-6-9-6 9-3-13c-3-2-7-2-11 0 0-4 2-7 5-8-1-5-4-8-9-9 3-3 7-4 11-3 1-4 0-7-3-10 7 0 13-3 16-9z"/><circle cx="26" cy="26" r="2.4" fill="#1a0f07"/><circle cx="38" cy="26" r="2.4" fill="#1a0f07"/></svg>{% endset %}
+{% block body %}
+<div class="shell">
+  <nav class="side">
+    <a class="brand" href="{{ url_for('dashboard') }}">{{ dragon }}<span>{{ t('app') }}</span></a>
+    <div class="navhead">{{ t('servers') }}</div>
+    {% for srv in servers %}<a class="navitem {{ 'cur' if inst is defined and inst.id == srv.id }}" href="{{ url_for('server', iid=srv.id) }}"><span class="dot {{ 'on' if srv.running() and srv.watcher.ready else ('mid' if srv.running() or srv.task) }}"></span>{{ srv.config.name }}</a>{% endfor %}
+    <a class="navitem add" href="{{ url_for('new_server') }}">+ {{ t('new_server') }}</a>
+    <div class="navfoot">
+      <a class="navitem {{ 'cur' if request.endpoint == 'manager_settings' }}" href="{{ url_for('manager_settings') }}">⚙ {{ t('manager') }}</a>
+      <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="ghost small">{{ t('logout') }}</button></form>
+    </div>
+  </nav>
+  <main class="content">
+    {{ flashes() }}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+{% endblock %}
+<script>
+  const CSRF = {{ (session.csrf or '') | tojson }};
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function toggle(id) { const el = $(id); el.type = el.type === 'password' ? 'text' : 'password'; }
+  function gen(id) {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+    const a = new Uint32Array(16); crypto.getRandomValues(a);
+    const el = $(id); el.value = Array.from(a, n => chars[n % chars.length]).join(''); el.type = 'text';
+  }
+  function copyText(text, btn, done, idle) {
+    const ok = () => { btn.textContent = done; setTimeout(() => btn.textContent = idle, 1500); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(text).then(ok); return; }
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); ok(); } finally { ta.remove(); }
+  }
+</script>
+{% block script %}{% endblock %}
+</body>
+</html>

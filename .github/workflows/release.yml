@@ -1,0 +1,62 @@
+name: Release
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install . pyinstaller pywin32
+      - run: pyinstaller packaging/windows/dragonwilds-manager.spec
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: dist/dragonwilds-manager.exe
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [windows, docker]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install build && python -m build
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-exe
+          path: dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/dragonwilds-manager.exe
+            dist/*.whl
+            dist/*.tar.gz
+          generate_release_notes: true

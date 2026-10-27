@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="pagehead"><div><h1>{{ t('manager') }}</h1><div class="sub">{{ t('manager_text') }}</div></div></div>
+<div class="grid">
+  <section class="card c6">
+    <h2>{{ t('language') }}</h2>
+    <form method="post"><input type="hidden" name="csrf" value="{{ session.csrf }}"><input type="hidden" name="what" value="lang">
+      <select name="lang">{% for code, name in languages.items() %}<option value="{{ code }}" {{ 'selected' if code == lang }}>{{ name }}</option>{% endfor %}</select>
+      <div class="btns"><button>{{ t('save') }}</button></div></form>
+  </section>
+  <section class="card c6">
+    <h2>{{ t('change_password') }}</h2>
+    <form method="post"><input type="hidden" name="csrf" value="{{ session.csrf }}"><input type="hidden" name="what" value="password">
+      <label>{{ t('current_password') }}</label><input type="password" name="current" autocomplete="current-password">
+      <label>{{ t('new_password') }}</label><input type="password" name="password" autocomplete="new-password" minlength="8">
+      <label>{{ t('password2') }}</label><input type="password" name="password2" autocomplete="new-password">
+      <div class="btns"><button>{{ t('save') }}</button></div></form>
+  </section>
+  <section class="card c12">
+    <h2>{{ t('about') }}</h2>
+    <dl><dt>{{ t('data_dir') }}</dt><dd><code>{{ data_dir }}</code></dd>
+      <dt>{{ t('firewall_mode') }}</dt><dd>{{ firewall or t('firewall_none') }}</dd></dl>
+    <p class="sub">{{ t('about_text', version=version) }}</p>
+  </section>
+</div>
+{% endblock %}

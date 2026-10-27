@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="pagehead"><div><h1>{{ t('new_server') }}</h1><div class="sub">{{ t('new_text') }}</div></div></div>
+<div class="card" style="max-width:760px">
+  <form method="post">
+    <input type="hidden" name="csrf" value="{{ session.csrf }}">
+    <div class="row">
+      <div><label for="name">{{ t('display_name') }}</label><input id="name" name="name" value="{{ form.name }}" required minlength="3" maxlength="40" autofocus><div class="hint">{{ t('name_hint') }}</div></div>
+      <div><label for="port">{{ t('game_port') }}</label><input id="port" name="port" type="number" min="1024" max="65535" value="{{ form.port }}" required><div class="hint">{{ t('port_hint') }}</div></div>
+    </div>
+    <div class="owner">
+      <label for="OwnerId">{{ t('owner_label') }}</label>
+      <input id="OwnerId" name="OwnerId" value="{{ form.OwnerId }}" placeholder="{{ t('owner_placeholder') }}" autocomplete="off">
+      <div class="hint">{{ t('owner_hint') }}</div>
+    </div>
+    <div class="row">
+      <div><label for="ServerName">{{ t('server_name') }}</label><input id="ServerName" name="ServerName" value="{{ form.ServerName }}" maxlength="64"></div>
+      <div><label for="DefaultWorldName">{{ t('initial_world') }}</label><input id="DefaultWorldName" name="DefaultWorldName" value="{{ form.DefaultWorldName }}" maxlength="32"><div class="hint">{{ t('initial_world_hint') }}</div></div>
+    </div>
+    <div class="row">
+      <div><label for="WorldPassword">{{ t('world_password') }}</label>
+        <div class="pw"><input id="WorldPassword" name="WorldPassword" type="password" value="{{ form.WorldPassword }}" autocomplete="off">
+          <button type="button" class="ghost" onclick="toggle('WorldPassword')">{{ t('show') }}</button><button type="button" class="ghost" onclick="gen('WorldPassword')">{{ t('new') }}</button></div>
+        <div class="hint">{{ t('world_password_hint') }}</div></div>
+      <div><label for="PlatformPolicy">{{ t('policy') }}</label>
+        <select id="PlatformPolicy" name="PlatformPolicy">{% for p in policies %}<option value="{{ p }}" {{ 'selected' if form.PlatformPolicy == p }}>{{ t('policy_' ~ p) }}</option>{% endfor %}</select></div>
+    </div>
+    <div class="btns"><button type="submit">{{ t('create') }}</button></div>
+  </form>
+</div>
+{% endblock %}

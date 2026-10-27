@@ -1,0 +1,21 @@
+# docker compose up -d   →   http://<host>:8080
+services:
+  manager:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: ghcr.io/consuelaaa/dragonwilds-manager:latest
+    container_name: dragonwilds-manager
+    restart: unless-stopped
+    ports:
+      - "8080:8080"        # web panel: keep this on your LAN or behind a reverse proxy with HTTPS
+      - "7777:7777/udp"    # game port of the first server. Add one line per extra server (7778, ...)
+    volumes:
+      - data:/data         # servers, worlds, backups, settings
+    # Stopping the container stops every game server cleanly first (they save the world); allow time for it
+    stop_grace_period: 4m
+    # Optional, for kick and whitelist blocking (nftables inside the container):
+    # cap_add: [NET_ADMIN]
+
+volumes:
+  data:

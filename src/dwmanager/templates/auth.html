@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="login">
+  <div class="brand" style="justify-content:center;margin-bottom:18px">{{ dragon }}<span style="font-size:22px">{{ t('app') }}</span></div>
+  <div class="card">
+    {{ flashes() }}
+    {% if view == "setup" %}
+    <h2>{{ t('setup_title') }}</h2>
+    <p class="sub">{{ t('setup_text') }}</p>
+    <form method="post">
+      <label for="pw">{{ t('password') }}</label><input id="pw" type="password" name="password" autofocus autocomplete="new-password" minlength="8">
+      <label for="pw2">{{ t('password2') }}</label><input id="pw2" type="password" name="password2" autocomplete="new-password">
+      <label for="lang">{{ t('language') }}</label>
+      <select id="lang" name="lang">{% for code, name in languages.items() %}<option value="{{ code }}" {{ 'selected' if code == lang }}>{{ name }}</option>{% endfor %}</select>
+      <div class="btns"><button type="submit">{{ t('save') }}</button></div>
+    </form>
+    {% else %}
+    <form method="post">
+      <label for="pw">{{ t('login_label') }}</label>
+      <input id="pw" type="password" name="password" autofocus autocomplete="current-password">
+      <div class="btns"><button type="submit">{{ t('login_button') }}</button></div>
+    </form>
+    {% endif %}
+  </div>
+  <p class="sub" style="text-align:center;margin-top:14px">{{ t('tagline') }}</p>
+</div>
+{% endblock %}
