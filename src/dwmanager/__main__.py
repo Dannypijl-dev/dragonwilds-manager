@@ -54,6 +54,7 @@ def serve(host, port, data_dir=None, ready=None, exit_on_stop=True):
     log = logging.getLogger("dwmanager")
     log.info("Dragonwilds Manager %s, data in %s", __version__, data_dir)
     manager = Manager(data_dir)
+    log.info("firewall mode for kicks: %s", manager.firewall.mode or "none")
     app = create_app(manager)
     manager.start_background()
 

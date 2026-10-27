@@ -89,9 +89,11 @@ User=$USER_NAME
 Group=$USER_NAME
 Environment=DWM_DATA_DIR=$DATA DWM_PORT=$PANEL_PORT
 ExecStart=$PREFIX/venv/bin/dragonwilds-manager run
-# The manager stops every game server cleanly on SIGTERM (they save the world); give it time
+# The manager stops every game server cleanly on SIGTERM (they save the world); give it time.
+# KillMode=process: if the manager itself crashes, the game servers keep running and are
+# adopted when it comes back.
 KillSignal=SIGTERM
-KillMode=mixed
+KillMode=process
 TimeoutStopSec=240
 Restart=on-failure
 RestartSec=5
