@@ -7,6 +7,9 @@ time out, and keeps them out for the chosen time.
   the manager runs as a normal user it calls the root-owned helper `dwm-firewall` via sudo.
 - Windows: Windows Firewall block rules ("Dragonwilds Manager block ...") through netsh.
 - Expiry is kept in blocks.json and enforced by the manager (nftables also times out by itself).
+
+Opening the game port in the host firewall: Windows Firewall (netsh) on Windows, ufw on Linux
+when it is installed (through the same root helper). Other Linux firewalls are left to the admin.
 """
 import ipaddress
 import logging
@@ -24,6 +27,9 @@ log = logging.getLogger("dwmanager.firewall")
 TABLE = "inet dragonwilds_manager"
 LINUX_HELPER = "/usr/local/lib/dragonwilds-manager/dwm-firewall"
 RULE_PREFIX = "Dragonwilds Manager block"
+PORT_RULE_PREFIX = "Dragonwilds Manager port"
+UFW = "/usr/sbin/ufw"
+PORT_CACHE_SECONDS = 30
 
 
 def valid_ip(ip):
@@ -47,6 +53,8 @@ class Firewall:
         self.state_file = Path(state_file)
         self.lock = threading.Lock()
         self.mode = self._detect()
+        self.port_mode = self._detect_port_mode()
+        self._port_cache = {}  # port -> (checked_at, open)
 
     def _detect(self):
         forced = os.environ.get("DWM_FIREWALL", "").lower()
@@ -63,6 +71,68 @@ class Firewall:
     @property
     def available(self):
         return self.mode is not None
+
+    def _detect_port_mode(self):
+        """How the game port can be opened in the host firewall, or None when the admin must do it."""
+        if self.mode == "netsh":
+            return "netsh"
+        if self.mode in ("nft", "helper") and (Path(UFW).exists() or shutil.which("ufw")):
+            return "ufw"
+        return None
+
+    # ---------- game port in the host firewall ----------
+    def port_is_open(self, port):
+        """True/False, or None when the host firewall can't be queried."""
+        if not self.port_mode:
+            return None
+        cached = self._port_cache.get(port)
+        if cached and time.time() - cached[0] < PORT_CACHE_SECONDS:
+            return cached[1]
+        try:
+            if self.port_mode == "ufw":
+                out = (_run(["sudo", "-n", LINUX_HELPER, "port", "status", str(port)]) if self.mode == "helper"
+                       else ufw_port("status", int(port)))
+                result = out.strip().endswith("open")
+            else:
+                probe = subprocess.run(["netsh", "advfirewall", "firewall", "show", "rule", f"name={PORT_RULE_PREFIX} UDP {int(port)}"],
+                                       capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                result = probe.returncode == 0
+        except Exception:
+            log.exception("checking the host firewall for port %s failed", port)
+            return None
+        self._port_cache[port] = (time.time(), result)
+        return result
+
+    def set_port(self, port, open_):
+        """Open or close the game port in the host firewall."""
+        if not self.port_mode:
+            raise RuntimeError("port_unavailable")
+        port = int(port)
+        if not 1 <= port <= 65535:
+            raise ValueError("invalid port")
+        action = "open" if open_ else "close"
+        if self.port_mode == "ufw":
+            if self.mode == "helper":
+                _run(["sudo", "-n", LINUX_HELPER, "port", action, str(port)])
+            else:
+                ufw_port(action, port)
+        else:
+            name = f"{PORT_RULE_PREFIX} UDP {port}"
+            subprocess.run(["netsh", "advfirewall", "firewall", "delete", "rule", f"name={name}"],
+                           capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
+            if open_:
+                _run(["netsh", "advfirewall", "firewall", "add", "rule", f"name={name}", "dir=in", "action=allow",
+                      "protocol=UDP", f"localport={port}"])
+        self._port_cache.pop(port, None)
+
+    def ensure_port(self, port):
+        """Best effort at server start: open the port if the host firewall is managed and it isn't open yet."""
+        try:
+            if self.port_mode and self.port_is_open(port) is False:
+                self.set_port(port, True)
+                log.info("opened UDP %s in the host firewall (%s)", port, self.port_mode)
+        except Exception:
+            log.exception("opening UDP %s in the host firewall failed", port)
 
     def _blocks(self):
         return read_json(self.state_file, [])
@@ -147,14 +217,22 @@ def _nft_script(text):
         raise RuntimeError(p.stderr.strip() or "nft failed")
 
 
-def allow_game_port(port, name):
-    """Windows only: make sure Windows Firewall lets the game port in (Linux firewalls are left to the admin)."""
-    if not platforms.WINDOWS:
-        return
-    rule = f"Dragonwilds Manager {name} UDP {port}"
-    probe = subprocess.run(["netsh", "advfirewall", "firewall", "show", "rule", f"name={rule}"],
-                           capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
-    if probe.returncode != 0:
-        subprocess.run(["netsh", "advfirewall", "firewall", "add", "rule", f"name={rule}", "dir=in", "action=allow",
-                        "protocol=UDP", f"localport={port}"], capture_output=True,
-                       creationflags=subprocess.CREATE_NO_WINDOW)
+def ufw_port(action, port):
+    """Root side (also used by the Linux helper): open/close/status of a UDP port in ufw."""
+    if not 1 <= int(port) <= 65535:
+        raise ValueError("invalid port")
+    ufw = UFW if Path(UFW).exists() else shutil.which("ufw")
+    if not ufw:
+        raise RuntimeError("ufw is not installed")
+    rule = f"{int(port)}/udp"
+    if action == "status":
+        out = subprocess.run([ufw, "status"], capture_output=True, text=True).stdout
+        is_open = any(line.split()[:2] == [rule, "ALLOW"] for line in out.splitlines() if line.strip())
+        return f"{rule} {'open' if is_open else 'closed'}"
+    if action == "open":
+        _run([ufw, "allow", rule, "comment", "Dragonwilds Manager"])
+    elif action == "close":
+        _run([ufw, "--force", "delete", "allow", rule])
+    else:
+        raise ValueError("action must be open, close or status")
+    return ""

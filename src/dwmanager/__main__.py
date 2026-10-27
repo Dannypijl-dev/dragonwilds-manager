@@ -18,9 +18,9 @@ def main(argv=None):
     run.add_argument("--host", default=os.environ.get("DWM_HOST", "0.0.0.0"))
     run.add_argument("--port", type=int, default=int(os.environ.get("DWM_PORT", "8080")))
     run.add_argument("--data-dir", default=None)
-    fw = sub.add_parser("firewall", help="(root helper) add/del an nftables block")
-    fw.add_argument("action", choices=["add", "del"])
-    fw.add_argument("ip")
+    fw = sub.add_parser("firewall", help="(root helper) nftables block add/del, or ufw port open/close/status")
+    fw.add_argument("action", choices=["add", "del", "port"])
+    fw.add_argument("arg1", help="ip (add/del) or open|close|status (port)")
     fw.add_argument("port", type=int)
     fw.add_argument("minutes", type=int, nargs="?", default=0)
     cc = sub.add_parser("ctrl-c", help="(Windows helper) send Ctrl+C to a console process")
@@ -29,8 +29,11 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     if args.cmd == "firewall":
-        from .firewall import nft_apply
-        nft_apply(args.action, args.ip, args.port, args.minutes or None)
+        from .firewall import nft_apply, ufw_port
+        if args.action == "port":
+            print(ufw_port(args.arg1, args.port))
+        else:
+            nft_apply(args.action, args.arg1, args.port, args.minutes or None)
         return 0
     if args.cmd == "ctrl-c":
         from .instance import send_ctrl_c

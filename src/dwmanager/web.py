@@ -172,6 +172,8 @@ def create_app(manager):
             "blocked": [{"ip": b["ip"], "minutes": max(1, round(b["seconds"] / 60))}
                         for b in manager.firewall.blocked(inst.port)],
             "can_block": manager.firewall.available, "build": _build(inst),
+            "host_firewall": manager.firewall.port_mode,
+            "port_open": manager.firewall.port_is_open(inst.port) if manager.firewall.port_mode else None,
         }
 
     # ---------- pages ----------
@@ -291,6 +293,15 @@ def create_app(manager):
             flash(t("f_installing"), "ok")
         else:
             abort(404)
+
+    @app.post("/s/<iid>/port/<what>")
+    @action("settings")
+    def host_port(inst, what):
+        if what not in ("open", "close"):
+            abort(404)
+        manager.firewall.set_port(inst.port, what == "open")
+        log.info("%s: UDP %s %s in the host firewall", inst.id, inst.port, "opened" if what == "open" else "closed")
+        flash(t("f_port_opened" if what == "open" else "f_port_closed", port=inst.port), "ok")
 
     @app.post("/s/<iid>/delete")
     def delete_server(iid):

@@ -12,7 +12,7 @@ from pathlib import Path
 
 import psutil
 
-from . import firewall, mods, platforms, steamcmd, world_settings, worlds
+from . import mods, platforms, steamcmd, world_settings, worlds
 from .history import History
 from .logwatch import LogWatcher
 from .serverfiles import ServerFiles
@@ -185,7 +185,7 @@ class Instance:
                 raise RuntimeError("server_not_installed")
             if not platforms.WINDOWS and os.geteuid() == 0:
                 raise RuntimeError("root")  # the game server itself refuses to run as root
-            firewall.allow_game_port(self.port, self.id)
+            self.firewall.ensure_port(self.port)
             (self.root / "logs").mkdir(exist_ok=True)
             out = open(self.root / "logs/stdout.log", "ab")
             kwargs = {"cwd": str(self.server_dir), "stdin": subprocess.DEVNULL, "stdout": out, "stderr": subprocess.STDOUT}

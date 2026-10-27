@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.3 — 2026-10-27
+
+- Host firewall from the panel: the Settings tab shows whether the server's UDP port is open in the firewall of the machine itself, with an open/close button. On Windows this uses Windows Firewall, on Linux ufw (through the root helper) when it is installed. The port is also opened automatically when the server starts, on both platforms.
+- The Linux root helper learned `port open|close|status <port>` next to the nftables block commands.
+
 ## 0.1.2 — 2026-10-27
 
 New look for the panel: stone frames with cut corners and the title on the edge, a rune-stone mark, Grenze and Alegreya Sans (loaded from Google Fonts, with system fonts as fallback), an ash palette with verdigris for online and dragonfire for busy states, the server list as full-width rows, and the server page opening with the name and state as a header. Same Flask templates and CSS, no new dependencies.

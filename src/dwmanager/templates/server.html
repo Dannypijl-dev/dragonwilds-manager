@@ -135,6 +135,18 @@
       <div class="hint">{{ t('ws_save_hint') }}</div>
     </form>
     {% else %}<div class="empty">{{ t('err_ws_unknown') }}</div>{% endif %}
+    <h3>{{ t('host_firewall') }}</h3>
+    <div class="sub">{{ t('host_firewall_text') }}</div>
+    {% if s.host_firewall %}
+    <div class="btns">
+      <span class="badge {{ 'ok' if s.port_open else 'bad' }}">{{ t('port_status_open' if s.port_open else 'port_status_closed', port=cfg.port) }}</span>
+      {% if s.port_open %}{{ post(url_for('host_port', iid=inst.id, what='close'), t('port_close'), 'ghost small') }}
+      {% else %}{{ post(url_for('host_port', iid=inst.id, what='open'), t('port_open'), 'small') }}{% endif %}
+    </div>
+    <div class="hint">{{ t('port_managed_by', fw=('Windows Firewall' if s.host_firewall == 'netsh' else 'ufw')) }}</div>
+    {% else %}
+    <div class="hint" style="margin-top:8px">{{ t('port_status_unknown', port=cfg.port) }}</div>
+    {% endif %}
     <h3 style="color:var(--blood-soft)">{{ t('danger_zone') }}</h3>
     <div class="danger-box">
       <div class="sub">{{ t('delete_text') }}</div>

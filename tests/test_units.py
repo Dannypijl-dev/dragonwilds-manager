@@ -120,3 +120,19 @@ def test_mods(tmp_path):
         zf.writestr("StorageHub/Scripts/main.lua", "x")
     with pytest.raises(mods.ModError, match="ue4ss"):
         mods.install_upload("lua.zip", lua, enabled)
+
+
+def test_ufw_status_parsing(monkeypatch):
+    import subprocess
+    from dwmanager import firewall
+
+    class R:
+        stdout = "Status: active\n\nTo                         Action      From\n--                         ------      ----\n7777/udp                   ALLOW       Anywhere\n22/tcp                     ALLOW       192.168.0.0/16\n"
+    monkeypatch.setattr(firewall, "UFW", "/bin/true")
+    monkeypatch.setattr(subprocess, "run", lambda *a, **k: R())
+    assert firewall.ufw_port("status", 7777) == "7777/udp open"
+    assert firewall.ufw_port("status", 7778) == "7778/udp closed"
+    with pytest.raises(ValueError):
+        firewall.ufw_port("status", 70000)
+    with pytest.raises(ValueError):
+        firewall.ufw_port("explode", 7777)
