@@ -1,4 +1,5 @@
 import struct
+import sys
 import zipfile
 from datetime import datetime
 
@@ -128,7 +129,7 @@ def test_ufw_status_parsing(monkeypatch):
 
     class R:
         stdout = "Status: active\n\nTo                         Action      From\n--                         ------      ----\n7777/udp                   ALLOW       Anywhere\n22/tcp                     ALLOW       192.168.0.0/16\n"
-    monkeypatch.setattr(firewall, "UFW", "/bin/true")
+    monkeypatch.setattr(firewall, "UFW", sys.executable)  # any file that exists on every platform
     monkeypatch.setattr(subprocess, "run", lambda *a, **k: R())
     assert firewall.ufw_port("status", 7777) == "7777/udp open"
     assert firewall.ufw_port("status", 7778) == "7778/udp closed"
