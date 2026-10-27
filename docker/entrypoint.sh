@@ -8,6 +8,7 @@ if [ "$(id -u)" = "0" ]; then
   fi
   # files written by an earlier root-run container or a bind mount, if any (only touches foreign files)
   find /data -not -user dwm -exec chown dwm:dwm {} + 2>/dev/null || true
+  export HOME=/home/dwm USER=dwm
   exec setpriv --reuid=dwm --regid=dwm --init-groups /usr/bin/tini -- "$@"
 fi
 exec /usr/bin/tini -- "$@"

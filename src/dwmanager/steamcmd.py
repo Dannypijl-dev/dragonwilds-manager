@@ -1,6 +1,7 @@
 """Install SteamCMD and use it to install or update the Dragonwilds server."""
 import io
 import logging
+import os
 import re
 import shutil
 import subprocess
@@ -59,9 +60,15 @@ def install_server(steamcmd_dir, server_dir, on_progress=None, validate=True, at
     cmd = [str(exe), "+@sSteamCmdForcePlatformType", platforms.STEAM_PLATFORM,
            "+force_install_dir", str(server_dir.resolve()), "+login", "anonymous",
            "+app_update", platforms.APP_ID] + (["validate"] if validate else []) + ["+quit"]
+    env = os.environ.copy()
+    if not platforms.WINDOWS:
+        # SteamCMD keeps its own config under $HOME; give it one that is always writable
+        home = Path(steamcmd_dir) / "home"
+        home.mkdir(parents=True, exist_ok=True)
+        env["HOME"] = str(home)
     last = ""
     for attempt in range(1, attempts + 1):
-        ok, last = _run(cmd, on_progress)
+        ok, last = _run(cmd, on_progress, env)
         if ok:
             return True
         log.warning("SteamCMD attempt %d failed: %s", attempt, last)
@@ -71,8 +78,8 @@ def install_server(steamcmd_dir, server_dir, on_progress=None, validate=True, at
     raise SteamCmdError(last or "SteamCMD failed")
 
 
-def _run(cmd, on_progress):
-    kwargs = {}
+def _run(cmd, on_progress, env=None):
+    kwargs = {"env": env}
     if platforms.WINDOWS:
         kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, **kwargs)
