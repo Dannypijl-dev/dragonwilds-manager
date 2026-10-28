@@ -15,12 +15,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install . pyinstaller pywin32
+      - run: pip install .[desktop] pyinstaller pywin32
       - run: pyinstaller packaging/windows/dragonwilds-manager.spec
       - uses: actions/upload-artifact@v4
         with:
           name: windows-exe
-          path: dist/dragonwilds-manager.exe
+          path: |
+            dist/dragonwilds-manager.exe
+            dist/dragonwilds-manager-app.exe
 
   docker:
     runs-on: ubuntu-latest
@@ -59,6 +61,7 @@ jobs:
         with:
           files: |
             dist/dragonwilds-manager.exe
+            dist/dragonwilds-manager-app.exe
             dist/*.whl
             dist/*.tar.gz
           generate_release_notes: true

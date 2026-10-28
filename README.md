@@ -33,6 +33,15 @@ This downloads `dragonwilds-manager.exe` from the latest release into `C:\Progra
 
 Run the same command again to update. `install.ps1 -Uninstall` removes the service and program (data is kept). Without the service: download the exe and run `dragonwilds-manager.exe run`.
 
+### Desktop app
+
+The panel can also live in its own window instead of a browser tab.
+
+- **Windows**: the installer puts *Dragonwilds Manager* in the Start Menu. It shows the panel of the running service; if the service isn't installed, it runs the manager itself and stops it (servers save their worlds) when you close the window. It uses the Edge WebView2 runtime that Windows 10/11 already have. Without the installer: `dragonwilds-manager-app.exe app`.
+- **pip**: `pip install dragonwilds-manager[desktop]` and then `dragonwilds-manager app`. On Linux the window needs GTK with WebKit (`python3-gi gir1.2-webkit2-4.1` on Debian/Ubuntu) or Qt; without those it opens the panel in your browser instead.
+
+`--port` and `DWM_PORT` work as for `run`.
+
 ### Linux (Debian, Ubuntu, …)
 
 ```bash
@@ -78,7 +87,7 @@ pytest
 DWM_DATA_DIR=./data dragonwilds-manager run --port 8080
 ```
 
-`src/dwmanager/instance.py` runs one server (SteamCMD, process, log), `manager.py` holds all of them plus the scheduler, `web.py` is the Flask panel. Platform differences are in `platforms.py` and `firewall.py`. Windows builds come from `packaging/windows/dragonwilds-manager.spec` (PyInstaller) and are published by the release workflow.
+`src/dwmanager/instance.py` runs one server (SteamCMD, process, log), `manager.py` holds all of them plus the scheduler, `web.py` is the Flask panel, `desktop.py` the window around it (pywebview, `pip install -e .[dev,desktop]`). Platform differences are in `platforms.py` and `firewall.py`. Windows builds come from `packaging/windows/dragonwilds-manager.spec` (PyInstaller; a console exe for the service and a windowed one for the desktop app) and are published by the release workflow. The icon is drawn by `packaging/windows/make_icon.py`.
 
 ## License
 

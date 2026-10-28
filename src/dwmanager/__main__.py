@@ -18,6 +18,9 @@ def main(argv=None):
     run.add_argument("--host", default=os.environ.get("DWM_HOST", "0.0.0.0"))
     run.add_argument("--port", type=int, default=int(os.environ.get("DWM_PORT", "8080")))
     run.add_argument("--data-dir", default=None)
+    app = sub.add_parser("app", help="open the panel in its own window (desktop app)")
+    app.add_argument("--port", type=int, default=int(os.environ.get("DWM_PORT", "8080")))
+    app.add_argument("--data-dir", default=None)
     fw = sub.add_parser("firewall", help="(root helper) nftables block add/del, or ufw port open/close/status")
     fw.add_argument("action", choices=["add", "del", "port"])
     fw.add_argument("arg1", help="ip (add/del) or open|close|status (port)")
@@ -41,10 +44,15 @@ def main(argv=None):
     if args.cmd == "service":
         from .winservice import run_service
         return run_service(args.args)
+    if args.cmd == "app":
+        from .desktop import run_app
+        return run_app(args.port, args.data_dir)
     return serve(getattr(args, "host", "0.0.0.0"), getattr(args, "port", 8080), getattr(args, "data_dir", None))
 
 
-def serve(host, port, data_dir=None, ready=None, exit_on_stop=True):
+def serve(host, port, data_dir=None, ready=None, exit_on_stop=True, on_manager=None):
+    """Run the panel until stopped. `ready(shutdown)` is called once the port is bound, with the function
+    that stops everything cleanly; `on_manager(manager)` as soon as the Manager exists."""
     from waitress import create_server
 
     from .manager import Manager
@@ -52,11 +60,15 @@ def serve(host, port, data_dir=None, ready=None, exit_on_stop=True):
 
     data_dir = Path(data_dir or platforms.default_data_dir())
     data_dir.mkdir(parents=True, exist_ok=True)
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-                        handlers=[logging.StreamHandler(), logging.FileHandler(os.path.join(str(data_dir), "manager.log"), encoding="utf-8")])
+    handlers = [logging.FileHandler(os.path.join(str(data_dir), "manager.log"), encoding="utf-8")]
+    if sys.stderr is not None:  # a windowed exe has no console to log to
+        handlers.insert(0, logging.StreamHandler())
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s", handlers=handlers)
     log = logging.getLogger("dwmanager")
     log.info("Dragonwilds Manager %s, data in %s", __version__, data_dir)
     manager = Manager(data_dir)
+    if on_manager:
+        on_manager(manager)
     log.info("firewall mode for kicks: %s", manager.firewall.mode or "none")
     app = create_app(manager)
     manager.start_background()

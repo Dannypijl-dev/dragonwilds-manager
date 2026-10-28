@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.4 — 2026-10-28
+
+Desktop app: `dragonwilds-manager app` opens the panel in its own window (pywebview; Edge WebView2 on Windows, GTK or Qt on Linux, otherwise the browser). It shows the running service's panel, or runs the manager itself and stops it cleanly when the window closes, asking first if servers are online. The Windows release gains `dragonwilds-manager-app.exe` (no console) and the installer adds a Start Menu shortcut *Dragonwilds Manager*; the exes and the window carry the rune-stone icon. New optional dependency group `desktop`.
+
 ## 0.1.3 — 2026-10-27
 
 - Host firewall from the panel: the Settings tab shows whether the server's UDP port is open in the firewall of the machine itself, with an open/close button. On Windows this uses Windows Firewall, on Linux ufw (through the root helper) when it is installed. The port is also opened automatically when the server starts, on both platforms.

@@ -6,6 +6,9 @@ STRINGS = {
     "en": {
         "app": "Dragonwilds Manager",
         "tagline": "Dedicated servers for RuneScape: Dragonwilds",
+        "app_close_title": "Close Dragonwilds Manager?",
+        "app_close_text": "Your game servers run inside this window. Closing it stops them (they save their worlds first). Close anyway?",
+        "app_no_webview": "No window library found: opening the panel in your browser instead. For a real window: pip install dragonwilds-manager[desktop] (Linux also needs GTK: python3-gi gir1.2-webkit2-4.1).",
         "login_label": "Password",
         "login_button": "Log in",
         "login_wrong": "Wrong password.",
@@ -314,6 +317,9 @@ STRINGS = {
     "nl": {
         "app": "Dragonwilds Manager",
         "tagline": "Dedicated servers voor RuneScape: Dragonwilds",
+        "app_close_title": "Dragonwilds Manager sluiten?",
+        "app_close_text": "Je gameservers draaien in dit venster. Sluiten stopt ze (ze slaan eerst hun wereld op). Toch sluiten?",
+        "app_no_webview": "Geen vensterbibliotheek gevonden: het paneel opent in je browser. Voor een echt venster: pip install dragonwilds-manager[desktop] (Linux heeft ook GTK nodig: python3-gi gir1.2-webkit2-4.1).",
         "login_label": "Wachtwoord",
         "login_button": "Inloggen",
         "login_wrong": "Verkeerd wachtwoord.",

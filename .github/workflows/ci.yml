@@ -27,13 +27,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install . pyinstaller pywin32
+      - run: pip install .[desktop] pyinstaller pywin32
       - run: pyinstaller packaging/windows/dragonwilds-manager.spec
       - name: Smoke test the exe (panel answers, server install starts)
         shell: pwsh
         run: |
           $env:DWM_DATA_DIR = "$env:RUNNER_TEMP\dwm"
           & dist\dragonwilds-manager.exe --version
+          # the windowed exe has no console, so --version prints nothing: it only has to exit 0
+          & dist\dragonwilds-manager-app.exe --version
+          if ($LASTEXITCODE -ne 0) { throw "dragonwilds-manager-app.exe failed ($LASTEXITCODE)" }
           $p = Start-Process -FilePath dist\dragonwilds-manager.exe -ArgumentList "run","--port","8085" -PassThru -NoNewWindow -RedirectStandardOutput out.log -RedirectStandardError err.log
           $ok = $false
           foreach ($i in 1..30) {
@@ -47,7 +50,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: dragonwilds-manager-windows
-          path: dist/dragonwilds-manager.exe
+          path: |
+            dist/dragonwilds-manager.exe
+            dist/dragonwilds-manager-app.exe
 
   docker:
     runs-on: ubuntu-latest
